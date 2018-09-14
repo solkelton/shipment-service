@@ -11,7 +11,7 @@ pipeline {
        }
        stage('Deploy'){
                   steps{
-                      sh 'cf push account-service -p ./build/libs/account-service-0.0.1-SNAPSHOT.jar'
+                      sh 'cf push shipment-service -p ./build/libs/shipment-service-0.0.1-SNAPSHOT.jar --random-route --no-start'
                   }
        }
     }
