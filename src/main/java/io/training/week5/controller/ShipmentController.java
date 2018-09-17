@@ -6,12 +6,14 @@ import io.training.week5.service.ShipmentService;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/shipments")
+@RequestMapping
 public class ShipmentController {
 
   private ShipmentService shipmentService;
@@ -25,6 +27,7 @@ public class ShipmentController {
     return shipmentService.retrieveShipment(id);
   }
 
+
   @GetMapping("/{id}/dates")
   public ShipmentDisplay retrieveShipmentDates(@PathVariable("id") long id) {
     return shipmentService.retrieveShipmentDates(id);
@@ -34,4 +37,10 @@ public class ShipmentController {
   public List<ShipmentDisplay> retrieveAccountShipments(@RequestParam("accountId") long accountId) {
     return shipmentService.retrieveAccountShipments(accountId);
   }
+
+  @PostMapping
+  public void addShipment(@RequestBody Shipment shipment) {
+    shipmentService.addShipment(shipment);
+  }
+
 }

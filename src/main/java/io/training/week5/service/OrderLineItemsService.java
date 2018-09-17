@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @FeignClient(name="order-service")
 public interface OrderLineItemsService {
 
-  @RequestMapping(method= RequestMethod.GET, value="/orders/lines/{shipmentId}")
+  @RequestMapping(method= RequestMethod.GET, value="/lines/{shipmentId}")
   public List<OrderLineDisplay> retrieveShipmentDisplay(@PathVariable("shipmentId") long orderId);
 
 }

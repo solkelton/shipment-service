@@ -11,8 +11,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 @FeignClient(name="account-service")
 public interface AddressService {
 
-  @RequestMapping(method= RequestMethod.GET, value="accounts/{accountId}/address/{id}")
-  public Address retrieveAddress(@PathVariable("accountId") long accountId, @PathVariable("id") long id);
-
-
+  @RequestMapping(method= RequestMethod.GET, value="/{accountId}/address/{addressId}")
+  public Address retrieveAddress(@PathVariable("accountId") long accountId,
+      @PathVariable("addressId") long addressId);
 }

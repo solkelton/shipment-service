@@ -11,7 +11,7 @@ public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
   @Query(nativeQuery=true, name="retrieveShipmentDates")
   ShipmentDisplay retrieveShipmentDates(long id);
 
-  List<Shipment> findByAccountId(long accountId);
+  List<Shipment> findAllByAccountId(long accountId);
 
 }
 

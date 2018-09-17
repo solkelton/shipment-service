@@ -4,9 +4,11 @@ import io.training.week5.model.Account;
 import io.training.week5.model.Address;
 import io.training.week5.entity.Shipment;
 import io.training.week5.model.OrderLineDisplay;
+import io.training.week5.model.OrderNumber;
 import io.training.week5.model.ShipmentDisplay;
 import io.training.week5.repo.ShipmentRepository;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import javax.persistence.criteria.Order;
@@ -40,24 +42,31 @@ public class ShipmentService {
 
   public ShipmentDisplay retrieveShipmentDates(long id) {
     return shipmentRepository.retrieveShipmentDates(id);
-//    return shipment;
   }
 
   public List<ShipmentDisplay> retrieveAccountShipments(long accountId) {
-    List<Shipment> shipmentList = shipmentRepository.findByAccountId(accountId);
+    List<Shipment> shipmentList = shipmentRepository.findAllByAccountId(accountId);
+    List<OrderNumber> orderNumberList = retrieveOrderNumber(accountId);
+    int size = 0;
+    if(shipmentList.size() == orderNumberList.size()) { size = shipmentList.size() | orderNumberList.size(); }
     List<ShipmentDisplay> shipmentDisplayList = new ArrayList<>();
-    for(Shipment shipment: shipmentList) {
+    for (int i = 0; i < size; i++) {
+      Shipment shipment = shipmentList.get(i);
       ShipmentDisplay shipmentDisplay = new ShipmentDisplay(shipment.getShippedDate(), shipment.getDeliveryDate());
-      shipmentDisplay.setOrderNumber(retrieveOrderNumber(accountId));
+      shipmentDisplay.setOrderNumber(orderNumberList.get(i).getOrderNumber());
       shipmentDisplay.setOrderLineItems(retrieveOrderLineDisplay(shipment.getId()));
       shipmentDisplayList.add(shipmentDisplay);
     }
     return shipmentDisplayList;
   }
 
+  public void addShipment(Shipment shipment) {
+    shipmentRepository.save(shipment);
+  }
+
   private Account retrieveAccount(long id) { return accountService.retrieveAccount(id); }
   private Address retrieveAddress(long accountId, long id) { return addressService.retrieveAddress(accountId, id); }
-  private long retrieveOrderNumber(long accountId) { return ordersService.retrieveOrderNumber(accountId); }
+  private List<OrderNumber> retrieveOrderNumber(long accountId) { return ordersService.retrieveOrderNumber(accountId); }
   private List<OrderLineDisplay> retrieveOrderLineDisplay(long ordersId ) { return orderLineItemsService.retrieveShipmentDisplay(ordersId); }
 
 }
