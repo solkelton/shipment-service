@@ -4,9 +4,12 @@ import io.training.week5.entity.Shipment;
 import io.training.week5.model.ShipmentDisplay;
 import io.training.week5.service.ShipmentService;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,11 +25,10 @@ public class ShipmentController {
     this.shipmentService = shipmentService;
   }
 
-  @GetMapping("/{id}")
-  public Shipment retrieveShipment(@PathVariable("id") long id) {
-    return shipmentService.retrieveShipment(id);
+  @GetMapping("/{shipmentId}")
+  public Shipment retrieveShipment(@PathVariable("shipmentId") long shipmentId) {
+    return shipmentService.retrieveShipment(shipmentId);
   }
-
 
   @GetMapping("/{id}/dates")
   public ShipmentDisplay retrieveShipmentDates(@PathVariable("id") long id) {
@@ -38,9 +40,21 @@ public class ShipmentController {
     return shipmentService.retrieveAccountShipments(accountId);
   }
 
-  @PostMapping
-  public void addShipment(@RequestBody Shipment shipment) {
-    shipmentService.addShipment(shipment);
+  @PutMapping("/{shipmentId}")
+  public Shipment updateShipment(@PathVariable("shipmentId") long shipmentId, @RequestBody Shipment shipment) {
+    return shipmentService.updateShipment(shipmentId, shipment);
   }
+
+  @PostMapping
+  public Shipment addShipment(@RequestBody Shipment shipment) {
+    return shipmentService.addShipment(shipment);
+  }
+
+  @Transactional
+  @DeleteMapping("/{shipmentId}")
+  public boolean removeShipment(@PathVariable("shipmentId") long shipmentId) {
+    return shipmentService.removeShipment(shipmentId);
+  }
+
 
 }

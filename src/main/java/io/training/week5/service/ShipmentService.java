@@ -28,10 +28,9 @@ public class ShipmentService {
   }
 
   public Shipment retrieveShipment(long id) {
-    Shipment shipment = new Shipment();
-    Optional<Shipment> query = shipmentRepository.findById(id);
-    if(query.isPresent()) {
-      shipment = query.get();
+    Shipment shipment = shipmentRepository.getShipmentById(id);
+
+    if(validateShipment(shipment)) {
       Account account = accountService.retrieveAccount(shipment.getAccountId());
       Address address = addressService.retrieveAddress(shipment.getAccountId(), shipment.getAddressId());
       shipment.setAccount(account);
@@ -60,8 +59,30 @@ public class ShipmentService {
     return shipmentDisplayList;
   }
 
-  public void addShipment(Shipment shipment) {
-    shipmentRepository.save(shipment);
+  public Shipment updateShipment(long id, Shipment updatedShipment) {
+    Shipment originalShipment = retrieveShipment(id);
+
+    if(validateShipment(originalShipment)) {
+      Shipment newShipment = update(originalShipment, updatedShipment);
+      return shipmentRepository.save(newShipment);
+    }
+    return new Shipment();
+  }
+
+  public Shipment addShipment(Shipment shipment) {
+    if(validateShipment(shipment)) {
+      return shipmentRepository.save(shipment);
+    }
+    return new Shipment();
+  }
+
+  public boolean removeShipment(long shipmentId) {
+    Shipment shipment = shipmentRepository.getShipmentById(shipmentId);
+    if(validateShipment(shipment)) {
+      shipmentRepository.deleteShipmentById(shipmentId);
+      return true;
+    }
+    return false;
   }
 
   private Account retrieveAccount(long id) { return accountService.retrieveAccount(id); }
@@ -69,4 +90,33 @@ public class ShipmentService {
   private List<OrderNumber> retrieveOrderNumber(long accountId) { return ordersService.retrieveOrderNumber(accountId); }
   private List<OrderLineDisplay> retrieveOrderLineDisplay(long ordersId ) { return orderLineItemsService.retrieveShipmentDisplay(ordersId); }
 
+  private boolean validateShipment(Shipment shipment) {
+    if(shipment == null) return false;
+    if(shipment.getAccountId() == 0) return false;
+    if(shipment.getAddressId() == 0) return false;
+    if(shipment.getShippedDate() == null) return false;
+    if(shipment.getDeliveryDate() == null) return false;
+    return true;
+  }
+
+  private Shipment update(Shipment original, Shipment updated) {
+    Shipment newShipment = new Shipment();
+    newShipment.setId(original.getId());
+
+    if(updated == null) return original;
+
+    if(updated.getAccountId() == 0){ newShipment.setAccountId(original.getAccountId()); }
+    else newShipment.setAccountId(updated.getAccountId());
+
+    if(updated.getAddressId() == 0) newShipment.setAddressId(original.getAddressId());
+    else newShipment.setAddressId(updated.getAddressId());
+
+    if(updated.getShippedDate() == null) newShipment.setShippedDate(original.getShippedDate());
+    else newShipment.setShippedDate(updated.getShippedDate());
+
+    if(updated.getDeliveryDate() == null) newShipment.setDeliveryDate(original.getDeliveryDate());
+    else newShipment.setDeliveryDate(updated.getDeliveryDate());
+
+    return newShipment;
+  }
 }
