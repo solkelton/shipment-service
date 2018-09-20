@@ -9,6 +9,7 @@ import org.springframework.lang.Nullable;
 
 public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
 
+  @Nullable
   @Query(nativeQuery=true, name="retrieveShipmentDates")
   ShipmentDisplay retrieveShipmentDates(long shipmentId);
 

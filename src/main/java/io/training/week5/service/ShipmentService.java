@@ -35,12 +35,17 @@ public class ShipmentService {
       Address address = addressService.retrieveAddress(shipment.getAccountId(), shipment.getAddressId());
       shipment.setAccount(account);
       shipment.setAddress(address);
+      return shipment;
     }
-    return shipment;
+    return new Shipment();
   }
 
   public ShipmentDisplay retrieveShipmentDates(long id) {
-    return shipmentRepository.retrieveShipmentDates(id);
+    Shipment shipment = retrieveShipment(id);
+    if(validateShipment(shipment)) {
+      return shipmentRepository.retrieveShipmentDates(id);
+    }
+    return new ShipmentDisplay();
   }
 
   public List<ShipmentDisplay> retrieveAccountShipments(long accountId) {
@@ -61,7 +66,6 @@ public class ShipmentService {
 
   public Shipment updateShipment(long id, Shipment updatedShipment) {
     Shipment originalShipment = retrieveShipment(id);
-
     if(validateShipment(originalShipment)) {
       Shipment newShipment = update(originalShipment, updatedShipment);
       return shipmentRepository.save(newShipment);
