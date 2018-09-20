@@ -43,16 +43,25 @@ public class ShipmentService {
   public ShipmentDisplay retrieveShipmentDates(long id) {
     Shipment shipment = retrieveShipment(id);
     if(validateShipment(shipment)) {
+      System.out.println("Valid shipment Identified");
       return shipmentRepository.retrieveShipmentDates(id);
     }
     return new ShipmentDisplay();
   }
 
   public List<ShipmentDisplay> retrieveAccountShipments(long accountId) {
-    List<Shipment> shipmentList = shipmentRepository.findAllByAccountId(accountId);
+    List<Shipment> shipmentList = shipmentRepository.getShipmentsByAccountId(accountId);
+    System.out.println("shipmentList: " + shipmentList.get(0).getDeliveryDate());
+
     List<OrderNumber> orderNumberList = retrieveOrderNumber(accountId);
+    System.out.println("orderNumberList: " + orderNumberList.get(0).getOrderNumber());
+
+    System.out.println("shipmentList size: " + shipmentList.size());
+    System.out.println("orderNumberList size: " + orderNumberList.size());
+
     int size = 0;
     if(shipmentList.size() == orderNumberList.size()) { size = shipmentList.size() | orderNumberList.size(); }
+    System.out.println("size: " + size);
     List<ShipmentDisplay> shipmentDisplayList = new ArrayList<>();
     for (int i = 0; i < size; i++) {
       Shipment shipment = shipmentList.get(i);

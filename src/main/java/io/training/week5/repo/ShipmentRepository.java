@@ -17,6 +17,9 @@ public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
   List<Shipment> findAllByAccountId(long accountId);
 
   @Nullable
+  List<Shipment> getShipmentsByAccountId(long accountId);
+
+  @Nullable
   Shipment getShipmentById(long shipmentId);
 
   void deleteShipmentById(long shipmentId);

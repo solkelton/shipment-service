@@ -32,6 +32,7 @@ public class ShipmentController {
 
   @GetMapping("/{id}/dates")
   public ShipmentDisplay retrieveShipmentDates(@PathVariable("id") long id) {
+    System.out.println("Finding shipment dates for shipmentId..." + id);
     return shipmentService.retrieveShipmentDates(id);
   }
 
