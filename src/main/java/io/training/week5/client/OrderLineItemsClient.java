@@ -1,4 +1,4 @@
-package io.training.week5.service;
+package io.training.week5.client;
 
 
 import io.training.week5.model.OrderLineDisplay;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 @Component
 @FeignClient(name="order-service")
-public interface OrderLineItemsService {
+public interface OrderLineItemsClient {
 
   @RequestMapping(method= RequestMethod.GET, value="/lines/{shipmentId}")
   public List<OrderLineDisplay> retrieveShipmentDisplay(@PathVariable("shipmentId") long orderId);

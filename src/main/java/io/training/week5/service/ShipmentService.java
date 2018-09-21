@@ -1,5 +1,10 @@
 package io.training.week5.service;
 
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import io.training.week5.client.AccountClient;
+import io.training.week5.client.AddressClient;
+import io.training.week5.client.OrderLineItemsClient;
+import io.training.week5.client.OrdersServiceClient;
 import io.training.week5.model.Account;
 import io.training.week5.model.Address;
 import io.training.week5.entity.Shipment;
@@ -8,60 +13,79 @@ import io.training.week5.model.OrderNumber;
 import io.training.week5.model.ShipmentDisplay;
 import io.training.week5.repo.ShipmentRepository;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
-import javax.persistence.criteria.Order;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ShipmentService {
+
+  private Logger logger = LoggerFactory.getLogger(this.getClass());
+
   private ShipmentRepository shipmentRepository;
-  @Autowired AccountService accountService;
-  @Autowired AddressService addressService;
-  @Autowired OrdersService ordersService;
-  @Autowired OrderLineItemsService orderLineItemsService;
+  @Autowired
+  AccountClient accountClient;
+  @Autowired
+  AddressClient addressClient;
+  @Autowired
+  OrdersServiceClient ordersServiceClient;
+  @Autowired
+  OrderLineItemsClient orderLineItemsClient;
 
   public ShipmentService(ShipmentRepository shipmentRepository) {
     this.shipmentRepository = shipmentRepository;
   }
 
+  @HystrixCommand(fallbackMethod = "retrieveShipmentFallBack")
   public Shipment retrieveShipment(long id) {
     Shipment shipment = shipmentRepository.getShipmentById(id);
 
     if(validateShipment(shipment)) {
-      Account account = accountService.retrieveAccount(shipment.getAccountId());
-      Address address = addressService.retrieveAddress(shipment.getAccountId(), shipment.getAddressId());
+      logger.info("Valid Shipment found at retrieveShipment Function");
+      Account account = accountClient.retrieveAccount(shipment.getAccountId());
+      Address address = addressClient.retrieveAddress(shipment.getAccountId(), shipment.getAddressId());
       shipment.setAccount(account);
       shipment.setAddress(address);
       return shipment;
     }
+    logger.debug("Invalid Shipment Id at retrieveShipment Function");
+    logger.debug("Shipment Id: {}", id);
+    return new Shipment();
+  }
+
+  public Shipment retrieveShipmentFallBack(long id) {
+    logger.debug("Account Serivce is Down");
+    Shipment shipment = shipmentRepository.getShipmentById(id);
+    if(validateShipment(shipment)) {
+      logger.info("Valid Shipment found at retrieveShipmentFallBack Function");
+      return shipment;
+    }
+    logger.debug("Invalid Shipment Id at retrieveShipmentFallBack Function");
+    logger.debug("Shipment Id: {}", id);
     return new Shipment();
   }
 
   public ShipmentDisplay retrieveShipmentDates(long id) {
     Shipment shipment = retrieveShipment(id);
     if(validateShipment(shipment)) {
-      System.out.println("Valid shipment Identified");
+      logger.info("Valid Shipment found at retrieveShipmentDates function");
       return shipmentRepository.retrieveShipmentDates(id);
     }
+    logger.debug("Invalid Shipment Id at retrieveShipmentDates Function");
+    logger.debug("Shipment Id: {}", id);
     return new ShipmentDisplay();
   }
 
+  @HystrixCommand(fallbackMethod = "retrieveAccountShipmentsFallBack")
   public List<ShipmentDisplay> retrieveAccountShipments(long accountId) {
     List<Shipment> shipmentList = shipmentRepository.getShipmentsByAccountId(accountId);
-    System.out.println("shipmentList: " + shipmentList.get(0).getDeliveryDate());
-
     List<OrderNumber> orderNumberList = retrieveOrderNumber(accountId);
-    System.out.println("orderNumberList: " + orderNumberList.get(0).getOrderNumber());
-
-    System.out.println("shipmentList size: " + shipmentList.size());
-    System.out.println("orderNumberList size: " + orderNumberList.size());
 
     int size = 0;
     if(shipmentList.size() == orderNumberList.size()) { size = shipmentList.size() | orderNumberList.size(); }
-    System.out.println("size: " + size);
+
     List<ShipmentDisplay> shipmentDisplayList = new ArrayList<>();
     for (int i = 0; i < size; i++) {
       Shipment shipment = shipmentList.get(i);
@@ -73,35 +97,54 @@ public class ShipmentService {
     return shipmentDisplayList;
   }
 
+  public List<ShipmentDisplay> retrieveAccountShipmentsFallBack(long accountId) {
+    List<Shipment> shipmentList = shipmentRepository.getShipmentsByAccountId(accountId);
+    List<ShipmentDisplay> shipmentDisplayList = new ArrayList<ShipmentDisplay>() {{
+      for(Shipment shipment : shipmentList) {
+        add(new ShipmentDisplay(shipment.getShippedDate(), shipment.getDeliveryDate()));
+      }
+    }};
+    return shipmentDisplayList;
+  }
+
   public Shipment updateShipment(long id, Shipment updatedShipment) {
     Shipment originalShipment = retrieveShipment(id);
     if(validateShipment(originalShipment)) {
+      logger.info("Valid Shipment Updated");
       Shipment newShipment = update(originalShipment, updatedShipment);
       return shipmentRepository.save(newShipment);
     }
+    logger.debug("Invalid Shipment Attempted to Updated at Id: {}", id);
+    logger.debug("Shipment: {}", updatedShipment.toString());
     return new Shipment();
   }
 
   public Shipment addShipment(Shipment shipment) {
     if(validateShipment(shipment)) {
+      logger.info("Valid Shipment Added");
       return shipmentRepository.save(shipment);
     }
+    logger.debug("Invalid Shipment Attempted to Add");
+    logger.debug("Shipment: {}", shipment.toString());
     return new Shipment();
   }
 
   public boolean removeShipment(long shipmentId) {
     Shipment shipment = shipmentRepository.getShipmentById(shipmentId);
     if(validateShipment(shipment)) {
+      logger.info("Valid Shipment Removed");
       shipmentRepository.deleteShipmentById(shipmentId);
       return true;
     }
+    logger.debug("Invalid Shipment Attempted to Remove");
+    logger.debug("Shipment Id: {}", shipmentId);
     return false;
   }
 
-  private Account retrieveAccount(long id) { return accountService.retrieveAccount(id); }
-  private Address retrieveAddress(long accountId, long id) { return addressService.retrieveAddress(accountId, id); }
-  private List<OrderNumber> retrieveOrderNumber(long accountId) { return ordersService.retrieveOrderNumber(accountId); }
-  private List<OrderLineDisplay> retrieveOrderLineDisplay(long ordersId ) { return orderLineItemsService.retrieveShipmentDisplay(ordersId); }
+  private Account retrieveAccount(long id) { return accountClient.retrieveAccount(id); }
+  private Address retrieveAddress(long accountId, long id) { return addressClient.retrieveAddress(accountId, id); }
+  private List<OrderNumber> retrieveOrderNumber(long accountId) { return ordersServiceClient.retrieveOrderNumber(accountId); }
+  private List<OrderLineDisplay> retrieveOrderLineDisplay(long ordersId ) { return orderLineItemsClient.retrieveShipmentDisplay(ordersId); }
 
   private boolean validateShipment(Shipment shipment) {
     if(shipment == null) return false;

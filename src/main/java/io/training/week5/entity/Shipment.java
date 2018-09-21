@@ -136,4 +136,14 @@ public class Shipment {
   public void setAddress(Address address) {
     this.address = address;
   }
+
+  @Override
+  public String toString() {
+    return "Shipment{" +
+        "accountId=" + accountId +
+        ", addressId=" + addressId +
+        ", shippedDate=" + shippedDate +
+        ", deliveryDate=" + deliveryDate +
+        '}';
+  }
 }
